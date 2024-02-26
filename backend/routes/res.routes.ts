@@ -1,108 +1,62 @@
-import auth from '../middleware/auth'
 import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import express, { NextFunction, Request, Response } from 'express'
-import User, { IUserCreate } from '../models/User';
-import { body } from 'express-validator';
-import validate from '../middleware/validate';
+import express, { Request, Response } from 'express'
 
-// auth is middleware which validates the token and passon the information of user by decrypting token
-
+import FormResponse, { IQuesRes } from '../models/Response';
+import auth from '../middleware/auth'
+import Form from '../models/Form';
+import { CheckFormAuthor } from './question.routes';
 
 dotenv.config();
 var router = express.Router();
 
-
-// to send information about user
-router.get('/', auth, function (req: Request, res: Response, next: NextFunction) {
-  return res.status(201).json({ user: res.user });
-});
-
-router.post('/', auth, function (req: Request, res: Response, next: NextFunction) {
-  res.send({ title: 'This is for todo' });
-});
-
-router.post('/register',
-  body('email').exists().isEmail().isLength({ max: 50, min: 3 }).toLowerCase().trim(),
-  body('name').exists().isString().isLength({ max: 50, min: 3 }).toLowerCase().trim(),
-  body('password').exists().isString().isLength({ max: 20, min: 5 }).trim(),
-  validate,
-  async function (req: Request, res: Response, next: NextFunction) {
+router.get('/:form_id',
+  auth,
+  async function (req: Request, res: Response) {
     try {
+      const { form_id } = req.params
+      if (!form_id) {
+        return res.status(400).json({ msg: "" })
+      }
 
-      const { email, name, password }: IUserCreate = req.body;
+      const check_form_author = await CheckFormAuthor(form_id, res.user._id.toString())
+      if (check_form_author === false) {
+        return res.status(401).json({ msg: "" })
+      } else if (check_form_author === undefined) {
+        return res.status(500).json({ msg: "" })
+      }
 
-      const checkEmail = await User.findOne({ email });
+      const form_responses = await FormResponse.find({ form_id })
 
-      if (checkEmail) return res.status(409).json({ msg: 'User already exists!' });
+      return res.status(200).json({ form_responses })
+    } catch (err) {
+      return res.status(500).json({ msg: 'Some internal error occured', err })
+    }
+  })
 
-      // this will do the hashing and encrupt the password before storing it in the database
-      //@ts-ignore
-      const encryptedPassword = await bcrypt.hash(password, 15)
-      // console.log(password, encryptedPassword)
-      const newUser = await User.create({
-        email,
-        name,
-        password: encryptedPassword,
+router.post('/:form_id',
+  async function (req: Request, res: Response) {
+    try {
+      const { form_id } = req.params
+      const { form_response }: { form_response?: IQuesRes[] } = req.body
+
+      if (!form_id || !form_response || !Array.isArray(form_response) || form_response.length > 50) {
+        return res.status(400).json({ msg: "" })
+      }
+
+      const formExist = await Form.exists({ _id: form_id })
+      if (!formExist)
+        return res.status(404).json({ msg: "" });
+
+      await FormResponse.create({
+        form_id,
+        formresponse: form_response,
+        time: Date.now()
       })
 
-      // in token mongodb object _id will be stored. After 2h token will expire 
-      const token = jwt.sign({ _id: newUser._id.toString(), email }, process.env.TOKEN_KEY || 'zhingalala', { expiresIn: '2h' })
-
-      // Set-Cookie header
-      // add an access_token cookie in the frontend will get validated to autherize some url
-      res.cookie("access_token", token)
-
-      return res.status(201).json({ token, user: { ...newUser.toObject(), password: undefined } })
-
+      return res.status(201).json({ msg: "Created!" })
     } catch (err) {
       return res.status(500).json({ msg: 'Some internal error occured', err })
     }
-  }
-);
-
-router.post('/login',
-  body('email').exists().isEmail().isLength({ max: 50, min: 3 }).toLowerCase().trim(),
-  body('password').exists().isString().isLength({ max: 20, min: 5 }).trim(),
-  validate,
-  async function (req: Request, res: Response, next: NextFunction) {
-    try {
-      const { email, password }: { email: string, password: string } = req.body;
-
-      const checkUser = await User.findOne({ email });
-
-      if (!checkUser) return res.status(404).json({ msg: 'User doesn`t exists!' });
-
-      // if user use another method to login like google/github insted of password
-      if (!checkUser.password) return res.status(405).json({ msg: 'Try another method' });
-
-      if (!(await bcrypt.compare(password, checkUser.password))) return res.status(406).json({ msg: 'Wrong password!' });
-
-      const token = jwt.sign({ _id: checkUser._id.toString(), email }, process.env.TOKEN_KEY || 'zhingalala', { expiresIn: '2h' })
-
-      // Set-Cookie header
-      // add an access_token cookie in the frontend will get validated to autherize some url
-      res.cookie("access_token", token)
-
-      return res.status(201).json({ token, user: { ...checkUser.toObject(), password: undefined } })
-    } catch (err) {
-      return res.status(500).json({ msg: 'Some internal error occured', err })
-    }
-  }
-);
-
-
-router.get('/logout', async function (req: Request, res: Response, next: NextFunction) {
-  try {
-
-    res.cookie("access_token", null) // will set cookie to null
-
-    return res.status(201).json({ msg: 'Sucessfull!' })
-
-  } catch (err) {
-    return res.status(500).json({ msg: 'Some internal error occured', err })
-  }
-})
+  });
 
 export default router

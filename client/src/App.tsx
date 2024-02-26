@@ -24,7 +24,7 @@ function App() {
           <Routes>
             <Route path="*" element={<Dashboard />} />
             <Route path="/edit/f/:form_id" element={<EditForm />} />
-            <Route path="/f/:form_id" element={<FillForm />} />
+            <Route path="/fill/f/:form_id" element={<FillForm />} />
           </Routes>
         </main>
       </div>
