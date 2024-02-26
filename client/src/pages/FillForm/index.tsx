@@ -10,13 +10,16 @@ export default function FillForm() {
   const { form_id } = useParams()
   const parentRef = useRef<HTMLDivElement | null>(null)
 
+  const [submitted, setSubmitted] = useState<boolean>(false)
   const [loding, setLoding] = useState<boolean>(false)
   const [questions, setQuestions] = useState<IQuestion[]>([])
   const [currentQuestion, setCurrentQuestion] = useState<number>(0)
   const [responses, setResponses] = useState<(Map<string, string | string[] | undefined>)>(new Map())
 
   useEffect(() => {
-    if (form_id) {
+    if (form_id && localStorage.getItem(form_id)) {
+      setSubmitted(true)
+    } else if (form_id) {
       setLoding(true)
       axios.get(`${import.meta.env.VITE_API_URL}/f/q/${form_id}`, { withCredentials: true })
         .then(({ status, data }) => {
@@ -31,20 +34,6 @@ export default function FillForm() {
         })
     }
   }, [form_id])
-
-  // const scrollParentRef = useCallback((to: "up" | "down") => {
-  //   if (to === "up") {
-  //     if (currentQuestion > 0 && parentRef.current) {
-  //       parentRef.current.scrollTop -= (window.innerHeight)
-  //     }
-  //     setCurrentQuestion((prev) => prev - 1)
-  //   } else {
-  //     if (currentQuestion < questions.length && parentRef.current) {
-  //       parentRef.current.scrollTop += (window.innerHeight)
-  //     }
-  //     setCurrentQuestion((prev) => prev + 1)
-  //   }
-  // }, [parentRef, currentQuestion, questions])
 
   useEffect(() => {
     if (parentRef.current && currentQuestion >= 0 && currentQuestion <= questions.length) {
@@ -69,6 +58,13 @@ export default function FillForm() {
 
   }, [setCurrentQuestion])
 
+  if(submitted){
+    return (
+      <div className='w-full h-screen flex items-center'>
+        <h1 className='text-slate-800 text-3xl mx-auto'>Thanks for submitting the form</h1>
+      </div>
+    )
+  }
   return (
     <div ref={parentRef} className='relative w-full h-screen scroll-smooth overflow-y-hidden'>
       {
@@ -78,7 +74,7 @@ export default function FillForm() {
       }
       {
         form_id &&
-        <SubmitForm responses={responses} form_id={form_id} />
+        <SubmitForm responses={responses} form_id={form_id} setSubmitted={setSubmitted} />
       }
       <div className='flex fixed bottom-10 right-10'>
         <button

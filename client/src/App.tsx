@@ -31,7 +31,10 @@ function App() {
     )
   } else {
     return (
-      <Auth />
+      <Routes>
+        <Route path="*" element={<Auth />} />
+        <Route path="/fill/f/:form_id" element={<FillForm />} />
+      </Routes>
     )
   }
 }

@@ -1,10 +1,12 @@
 import axios from "axios"
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 
-export default function SubmitForm({ form_id, responses }: {
+export default function SubmitForm({ form_id, responses, setSubmitted }: {
   form_id: string
+  setSubmitted: React.Dispatch<React.SetStateAction<boolean>>
   responses: Map<string, string | string[] | undefined>
 }) {
+
 
   const handleSubmit = useCallback(() => {
 
@@ -20,6 +22,10 @@ export default function SubmitForm({ form_id, responses }: {
       form_response: form_response
     }, { withCredentials: true }).then(({ status, data }) => {
       console.log(status, data)
+      if (status === 201 && data.resId) {
+        setSubmitted(true)
+        localStorage.setItem(form_id, data.resId)
+      }
     }).catch((err) => {
       console.log("While submitting form", err)
     })

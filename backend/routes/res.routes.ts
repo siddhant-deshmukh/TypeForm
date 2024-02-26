@@ -47,13 +47,13 @@ router.post('/:form_id',
       if (!formExist)
         return res.status(404).json({ msg: "" });
 
-      await FormResponse.create({
+      const resDoc = await FormResponse.create({
         form_id,
         formresponse: form_response,
         time: Date.now()
       })
 
-      return res.status(201).json({ msg: "Created!" })
+      return res.status(201).json({ msg: "Created!", resId: resDoc._id })
     } catch (err) {
       return res.status(500).json({ msg: 'Some internal error occured', err })
     }

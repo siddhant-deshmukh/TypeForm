@@ -41,7 +41,7 @@ router.get('/:form_id',
     }
   });
 
-router.get('/q/:form_id', auth,
+router.get('/q/:form_id',
   async function (req: Request, res: Response) {
     try {
       const { form_id } = req.params
