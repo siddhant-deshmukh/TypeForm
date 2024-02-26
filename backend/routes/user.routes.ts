@@ -52,7 +52,11 @@ router.post('/register',
 
       // Set-Cookie header
       // add an access_token cookie in the frontend will get validated to autherize some url
-      res.cookie("access_token", token)
+      res.cookie("access_token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax'
+      })
 
       return res.status(201).json({ token, user: { ...newUser.toObject(), password: undefined } })
 
@@ -83,7 +87,11 @@ router.post('/login',
 
       // Set-Cookie header
       // add an access_token cookie in the frontend will get validated to autherize some url
-      res.cookie("access_token", token)
+      res.cookie("access_token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax'
+      })
 
       return res.status(200).json({ token, user: { ...checkUser.toObject(), password: undefined } })
     } catch (err) {
