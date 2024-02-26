@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { IQuestion } from '../../types'
 import QuestionPage from './QuestionPage'
 import SubmitForm from './SubmitForm'
+import { Spinner } from '../../components/Spinner'
 
 export default function FillForm() {
   const { form_id } = useParams()
@@ -58,7 +59,14 @@ export default function FillForm() {
 
   }, [setCurrentQuestion])
 
-  if(submitted){
+  if (loding) {
+    return (
+      <div className='w-full h-screen flex items-center justify-center'>
+        <Spinner size={10}/>
+      </div>
+    )
+  }
+  if (submitted) {
     return (
       <div className='w-full h-screen flex items-center'>
         <h1 className='text-slate-800 text-3xl mx-auto'>Thanks for submitting the form</h1>

@@ -1,9 +1,9 @@
-import React, { useContext } from 'react'
+import { useContext } from 'react'
 import EditFormContext from '../EditFormContext'
 import EditOptions from './EditOptions'
 
 export default function CenterPanel() {
-  const { form, selectedQue, setSelectedQue, editSelectedQue } = useContext(EditFormContext)
+  const { form, selectedQue, editSelectedQue } = useContext(EditFormContext)
 
   return (
     <div className='w-full aspect-[1376/788] bg-white flex'>
