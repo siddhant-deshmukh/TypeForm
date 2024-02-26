@@ -97,6 +97,93 @@ router.post('/:form_id',
     }
   });
 
+
+router.put('/:form_id/:que_id',
+  auth,
+  body('title').exists().isString().isLength({ max: 50, min: 1 }).trim(),
+  body('description').optional().isString().isLength({ max: 300 }).trim(),
+  body('type').exists().isIn(['short', 'long', 'mcq']),
+  body('maxLength').optional().isInt(),
+  body('options').optional().isArray({ max: 50 }),
+  body('options.*').isString().isLength({ min: 1, max: 50 }),
+  validate,
+  async function (req: Request, res: Response) {
+    try {
+      const { form_id, que_id } = req.params
+      if (!form_id) {
+        return res.status(400).json({ msg: "" })
+      }
+
+      const { title, description, type, maxLength, options }: IQuestionCreate = req.body
+      if (
+        ((type === "long" || type === "short") && (maxLength === undefined || maxLength < 0))
+        ||
+        (type === "mcq" && (options === undefined || options?.length < 1))
+      )
+        return res.status(404).json({ msg: "invalid question type" });
+
+      // console.log("Checking author")
+      const check_form_author = await CheckFormAuthor(form_id, res.user._id.toString())
+      if (check_form_author === false) {
+        return res.status(401).json({ msg: "" })
+      } else if (check_form_author === undefined) {
+        return res.status(500).json({ msg: "" })
+      }
+
+      const question = await Question.findOneAndUpdate({ form_id, _id: que_id }, {
+        title,
+        description: (description) ? description : "",
+        type,
+        maxLength,
+        options
+      })
+
+      return res.status(200).json({ msg: "Updated", question })
+    } catch (err) {
+      return res.status(500).json({ msg: 'Some internal error occured', err })
+    }
+  })
+router.delete('/:form_id/:que_id',
+  auth,
+  async function (req: Request, res: Response) {
+    try {
+      const { form_id, que_id } = req.params
+      if (!form_id) {
+        return res.status(400).json({ msg: "" })
+      }
+
+      // console.log("Checking author")
+      const check_form_author = await CheckFormAuthor(form_id, res.user._id.toString())
+      if (check_form_author === false) {
+        return res.status(401).json({ msg: "" })
+      } else if (check_form_author === undefined) {
+        return res.status(500).json({ msg: "" })
+      }
+
+      const session = await mongoose.startSession()
+      session.startTransaction()
+      try {
+        await Question.findOneAndDelete({ form_id, _id: que_id })
+
+        await Form.findByIdAndUpdate(form_id, {
+          $pull: { questions: que_id }
+        })
+
+        // console.log("Form updated")
+        await session.commitTransaction()
+        await session.endSession()
+        return res.status(200).json({ msg: "Deleted" })
+
+      } catch (err) {
+        await session.abortTransaction()
+        await session.endSession()
+        return res.status(500).json({ msg: "Internal server error", err })
+      }
+
+    } catch (err) {
+      return res.status(500).json({ msg: 'Some internal error occured', err })
+    }
+  })
 export async function CheckFormAuthor(form_id: string, author_id: string) {
   try {
     const exist = await Form.exists({ _id: form_id, author_id })

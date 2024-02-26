@@ -24,9 +24,9 @@ router.post('/', auth, function (req: Request, res: Response, next: NextFunction
 });
 
 router.post('/register',
-  body('email').exists().isEmail().isLength({ max: 50, min: 3 }).toLowerCase().trim(),
-  body('name').exists().isString().isLength({ max: 50, min: 3 }).toLowerCase().trim(),
+  body('name').exists().isString().isLength({ max: 50, min: 3 }).trim(),
   body('password').exists().isString().isLength({ max: 20, min: 5 }).trim(),
+  body('email').exists().isEmail().isLength({ max: 50, min: 3 }).toLowerCase().trim(),
   validate,
   async function (req: Request, res: Response, next: NextFunction) {
     try {

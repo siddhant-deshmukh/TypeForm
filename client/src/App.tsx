@@ -1,35 +1,39 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useContext } from "react"
+import AppContext from "./AppContext"
+import { Spinner } from "./components/Spinner"
+import Auth from "./pages/Auth"
+import Dashboard from "./pages/Dashboard"
+import { Route, Routes } from "react-router-dom"
+import EditForm from "./pages/EditForm"
+import FillForm from "./pages/FillForm"
 
 function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  const { authLoading, user } = useContext(AppContext)
+
+  if (authLoading) {
+    return (
+      <div className="w-full h-screen flex justify-center items-center">
+        <Spinner size={20} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+    )
+  } else if (user) {
+    return (
+      <div className="w-full ">
+        <main className="w-full min-h-screen">
+          <Routes>
+            <Route path="*" element={<Dashboard />} />
+            <Route path="/edit/f/:form_id" element={<EditForm />} />
+            <Route path="/f/:form_id" element={<FillForm />} />
+          </Routes>
+        </main>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    )
+  } else {
+    return (
+      <Auth />
+    )
+  }
 }
 
 export default App

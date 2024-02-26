@@ -23,6 +23,24 @@ router.get('/', auth,
     }
   });
 
+router.get('/:form_id',
+  async function (req: Request, res: Response) {
+    try {
+      const { form_id } = req.params
+      if (!form_id) {
+        return res.status(400).json({ msg: "" })
+      }
+
+      const form = await Form.findById(form_id).select({ questions: 0 })
+      if (!form)
+        return res.status(404).json({ msg: "" })
+      return res.status(200).json({ msg: "Created", form: form.toObject() })
+      
+    } catch (err) {
+      return res.status(500).json({ msg: 'Some internal error occured', err })
+    }
+  });
+
 router.get('/q/:form_id', auth,
   async function (req: Request, res: Response) {
     try {
