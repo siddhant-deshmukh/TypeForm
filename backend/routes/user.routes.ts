@@ -55,7 +55,8 @@ router.post('/register',
       res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax'
+        sameSite: 'none',
+        domain: process.env.CLIENT_URL
       })
 
       return res.status(201).json({ token, user: { ...newUser.toObject(), password: undefined } })
@@ -90,7 +91,8 @@ router.post('/login',
       res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax'
+        sameSite: 'none',
+        domain: process.env.CLIENT_URL
       })
 
       return res.status(200).json({ token, user: { ...checkUser.toObject(), password: undefined } })
